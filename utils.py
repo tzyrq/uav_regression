@@ -49,10 +49,10 @@ def visualize_sum_testing_result(path,init, prediction,sub_prediction, label, ba
 
 def visualize_sum_training_result(init, prediction,sub_prediction, label, batch_id, epoch, batch_size):
     assert prediction.shape[0] == label.shape[0], "prediction size and label size is not identical"
-    if not os.path.exists("/home/zzhao/data/uav_regression/training_result/epoch_" + str(epoch)):
-        os.mkdir("/home/zzhao/data/uav_regression/training_result/epoch_" + str(epoch))
-    if not os.path.exists("/home/zzhao/data/uav_regression/training_result/epoch_" + str(epoch) + "/sum"):
-        os.mkdir("/home/zzhao/data/uav_regression/training_result/epoch_" + str(epoch) + "/sum")
+    if not os.path.exists("/home/share_uav/ruiz/data/uav_regression/training_result/epoch_" + str(epoch)):
+        os.mkdir("/home/share_uav/ruiz/data/uav_regression/training_result/epoch_" + str(epoch))
+    if not os.path.exists("/home/share_uav/ruiz/data/uav_regression/training_result/epoch_" + str(epoch) + "/sum"):
+        os.mkdir("/home/share_uav/ruiz/data/uav_regression/training_result/epoch_" + str(epoch) + "/sum")
 
     for idx, _ in enumerate(prediction):
         init_output = init[idx].cpu().detach()
@@ -68,9 +68,9 @@ def visualize_sum_training_result(init, prediction,sub_prediction, label, batch_
         label_output = label[idx].cpu().detach()
         label_output = torch.squeeze(label_output)
 
-        torchvision.utils.save_image(init_output, "/home/zzhao/data/uav_regression/training_result/epoch_" + str(\
+        torchvision.utils.save_image(init_output, "/home/share_uav/ruiz/data/uav_regression/training_result/epoch_" + str(\
             epoch) + "/sum" + "/" + str(idx + batch_id * batch_size) + "_init.png")
-        torchvision.utils.save_image(sub_prediction_output, "/home/zzhao/data/uav_regression/training_result/epoch_" + str(
+        torchvision.utils.save_image(sub_prediction_output, "/home/share_uav/ruiz/data/uav_regression/training_result/epoch_" + str(
             epoch) + "/sum" + "/" + str(idx + batch_id * batch_size) + "_sub_prediction.png")
-        torchvision.utils.save_image(prediction_output, "/home/zzhao/data/uav_regression/training_result/epoch_" + str(epoch) + "/sum" + "/" + str(idx + batch_id * batch_size) +  "_prediction.png")
-        torchvision.utils.save_image(label_output, "/home/zzhao/data/uav_regression/training_result/epoch_" + str(epoch) + "/sum" + "/" + str(idx + batch_id * batch_size ) +  "_label.png")
+        torchvision.utils.save_image(prediction_output, "/home/share_uav/ruiz/data/uav_regression/training_result/epoch_" + str(epoch) + "/sum" + "/" + str(idx + batch_id * batch_size) +  "_prediction.png")
+        torchvision.utils.save_image(label_output, "/home/share_uav/ruiz/data/uav_regression/training_result/epoch_" + str(epoch) + "/sum" + "/" + str(idx + batch_id * batch_size ) +  "_label.png")

@@ -15,14 +15,13 @@ from utils import visualize_sum_testing_result
 from correlation import Correlation
 from auc import auc
 
+image_saving_dir = '/home/share_uav/ruiz/data/uav_regression/'
 
-image_saving_dir = '/home/zzhao/data/uav_regression/'
-
-
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 init_cor = Correlation()
 pred_cor = Correlation()
+
 
 def train(model, train_loader, device, optimizer, criterion, epoch, batch_size):
     model.train()
@@ -32,9 +31,9 @@ def train(model, train_loader, device, optimizer, criterion, epoch, batch_size):
 
     for batch_idx, data in enumerate(tqdm(train_loader)):
         optimizer.zero_grad()
-        task = data['task'].to(device).float()
+        # task = data['task'].to(device).float()
         task_label = data['task_label'].to(device).float()
-        #print("task shape", task.shape)
+        # print("task shape", task.shape)
 
         # All black
         # init = data['init']
@@ -44,19 +43,19 @@ def train(model, train_loader, device, optimizer, criterion, epoch, batch_size):
         # Normal
         init = data['init'].to(device).float()
 
-        #print("init shape", init.shape)
+        # print("init shape", init.shape)
         label = data['label'].to(device).float()
-        #model prediction
+        # model prediction
         prediction = model(subx=task_label, mainx=init)
 
-        #loss
+        # loss
         loss_mse = criterion(prediction, label.data)
 
         # update the weights within the model
         loss_mse.backward()
         optimizer.step()
 
-        #accumulate loss
+        # accumulate loss
         if loss_mse != 0.0:
             sum_running_loss += loss_mse * init.size(0)
         num_images += init.size(0)
@@ -64,6 +63,7 @@ def train(model, train_loader, device, optimizer, criterion, epoch, batch_size):
         if batch_idx % 50 == 0 or batch_idx == len(train_loader) - 1:
             sum_epoch_loss = sum_running_loss / num_images
             print('\nTraining phase: epoch: {} batch:{} Loss: {:.4f}\n'.format(epoch, batch_idx, sum_epoch_loss))
+
 
 def val(path, model, test_loader, device, criterion, epoch, batch_size):
     model.eval()
@@ -109,7 +109,8 @@ def val(path, model, test_loader, device, criterion, epoch, batch_size):
     auc(['flow'], [2, 4, 10, 100], [[label_output, prediction_output]], auc_path)
     return sum_running_loss, prediction_output, label_output, init_output
 
-def save_model(checkpoint_dir,  model_checkpoint_name, model):
+
+def save_model(checkpoint_dir, model_checkpoint_name, model):
     model_save_path = '{}/{}'.format(checkpoint_dir, model_checkpoint_name)
     print('save model to: \n{}'.format(model_save_path))
     torch.save(model.state_dict(), model_save_path)
@@ -145,7 +146,8 @@ def main():
 
     device = torch.device("cuda")
 
-    all_dataset = UAVDatasetTuple(task_path=args.data_path, task_label_path = args.data_label_path, init_path=args.init_path, label_path=args.label_path)
+    all_dataset = UAVDatasetTuple(task_path=args.data_path, task_label_path=args.data_label_path,
+                                  init_path=args.init_path, label_path=args.label_path)
 
     train_size = int(args.split_ratio * len(all_dataset))
     test_size = len(all_dataset) - train_size
@@ -161,13 +163,12 @@ def main():
 
     model_ft = nn.DataParallel(model_ft)
 
-    criterion  = nn.MSELoss(reduction='sum')
+    criterion = nn.MSELoss(reduction='sum')
 
     if args.load_from_main_checkpoint:
         chkpt_mainmodel_path = args.load_from_main_checkpoint
         print("Loading ", chkpt_mainmodel_path)
         model_ft.load_state_dict(torch.load(chkpt_mainmodel_path, map_location=device))
-
 
     model_ft = model_ft.to(device)
 
@@ -177,8 +178,10 @@ def main():
     # Decay LR by a factor of 0.1
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=30,drop_last=True)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=30, drop_last=True)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=30,
+                                               drop_last=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=30,
+                                              drop_last=True)
 
     # cor = Correlation()
     correlation_path = image_saving_path
@@ -189,7 +192,8 @@ def main():
                                                                      device, criterion, epoch, args.batch_size)
             cor_path = os.path.join(correlation_path, "epoch_" + str(epoch))
             coef = pred_cor.corrcoef(prediction_output, label_output, cor_path, "correlation_{0}.png".format(epoch))
-            correlation_init_label = init_cor.corrcoef(init_output,label_output, cor_path,"correlation_init_label{0}.png".format(epoch))
+            correlation_init_label = init_cor.corrcoef(init_output, label_output, cor_path,
+                                                       "correlation_init_label{0}.png".format(epoch))
             print('correlation coefficient : {0}\n'.format(coef))
             print('correlation_init_label coefficient : {0}\n'.format(correlation_init_label))
         return True
@@ -201,16 +205,19 @@ def main():
         exp_lr_scheduler.step()
         cor_path = os.path.join(correlation_path, "epoch_" + str(epoch))
         train(model_ft, train_loader, device, optimizer_ft, criterion, epoch, args.batch_size)
-        loss, prediction_output, label_output, init_output = val(image_saving_path, model_ft, test_loader, device, criterion, epoch, args.batch_size)
+        loss, prediction_output, label_output, init_output = val(image_saving_path, model_ft, test_loader, device,
+                                                                 criterion, epoch, args.batch_size)
         if loss < best_loss:
             save_model(checkpoint_dir=args.checkpoint_dir + "/" + args.model_checkpoint_name,
                        model_checkpoint_name=args.model_checkpoint_name + "_epoch_" + str(epoch) + '_' + str(loss),
                        model=model_ft)
             best_loss = loss
         coef = pred_cor.corrcoef(prediction_output, label_output, cor_path, "correlation_{0}.png".format(epoch))
-        correlation_init_label = init_cor.corrcoef(init_output,label_output, cor_path,"correlation_init_label_{0}.png".format(epoch))
+        correlation_init_label = init_cor.corrcoef(init_output, label_output, cor_path,
+                                                   "correlation_init_label_{0}.png".format(epoch))
         print('prediction-label correlation coefficient : {0}\n'.format(coef))
         print('initial-label correlation coefficient : {0}\n'.format(correlation_init_label))
+
 
 if __name__ == '__main__':
     main()

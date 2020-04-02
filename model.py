@@ -83,7 +83,9 @@ class mainnet(nn.Module):
 
     def subnet(self,x):
         # 2D Conv Operation
+        #print(x.shape)
         x = torch.squeeze(x)
+        #print(x.shape)
 
         # 3D Conv Operation
         # x = x.view(4, 1, 60, 100, 100)
@@ -135,12 +137,14 @@ class mainnet(nn.Module):
         return x
 
     def forward(self, subx, mainx):
+        #print(subx.shape)
         subx = self.subnet(subx)
         subx = torch.squeeze(subx)
         mainx = self.mainnet(mainx)
         # print("subx", subx.shape)
         # print("mainx", mainx.shape)
         x = torch.cat((subx, mainx), 1)
+        print(x.shape)
         x = self.deconv(x)
 
         x = x.view(-1,100,100)
@@ -148,10 +152,9 @@ class mainnet(nn.Module):
 
 
 if __name__ == "__main__":
-    subx = torch.rand(2,1, 100, 100,60)
-    mainx =  torch.rand(2,1,100, 100)
+    subx = torch.rand(2, 60, 100, 100)
+    mainx = torch.rand(2, 1, 100, 100)
 
     net = mainnet()
     output = net(subx, mainx)
-    print(output.shape)
-#[2, 256, 23, 23]
+    print(net)

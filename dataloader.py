@@ -89,11 +89,18 @@ class UAVDatasetTuple(Dataset):
         return positive_ratio, negative_ratio
 
 if __name__ == '__main__':
-    data_path ='/data/zzhao/uav_regression/main_test/data_tasks.npy'
-    init_path = '/data/zzhao/uav_regression/main_test/data_init_density.npy'
-    label_path = '/data/zzhao/uav_regression/main_test/training_label_density.npy'
 
-    all_dataset = UAVDatasetTuple(task_path=data_path, init_path=init_path, label_path=label_path)
+    data_path = "/data/zzhao/uav_regression/mainFlow/fushion/data_tasks.npy"
+    data_label_path = "/data/zzhao/uav_regression/mainFlow/fushion/data_subnet.npy"
+    init_path = "/data/zzhao/uav_regression/mainFlow/fushion/data_init.npy"
+    label_path = "/data/zzhao/uav_regression/mainFlow/fushion/label_mainnet.npy"
+
+    all_dataset = UAVDatasetTuple(task_path=data_path,
+                                  init_path=init_path,
+                                  task_label_path=init_path,
+                                  label_path=label_path)
     sample = all_dataset[0]
-    print(sample['task'].shape)
+
+    np.set_printoptions(threshold=np.inf)
+    print(sample)
     count = 0
