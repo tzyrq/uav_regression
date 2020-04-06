@@ -51,14 +51,14 @@ class MinMaxModel(nn.Module):
 
         self.netMaxPool = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.deconvMin1 = nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=4)
-        self.deconvMin2 = nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=2, stride=2)
-        self.deconvMin3 = nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=2, stride=2)
+        self.deconvMin1 = nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=3)
+        self.deconvMin2 = nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=3, stride=2)
+        self.deconvMin3 = nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4, stride=2, padding=1)
         self.deconvMin4 = nn.ConvTranspose2d(in_channels=64, out_channels=1, kernel_size=1, stride=1)
 
-        self.deconvMax1 = nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=4)
-        self.deconvMax2 = nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=2, stride=2)
-        self.deconvMax3 = nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=2, stride=2)
+        self.deconvMax1 = nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=3)
+        self.deconvMax2 = nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=3, stride=2)
+        self.deconvMax3 = nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4, stride=2, padding=1)
         self.deconvMax4 = nn.ConvTranspose2d(in_channels=64, out_channels=1, kernel_size=1, stride=1)
 
         self.deconvMinBN1 = nn.BatchNorm2d(256)
@@ -154,6 +154,8 @@ class MinMaxModel(nn.Module):
         xMin = torch.cat((x, initMin), 1)
         xMax = torch.cat((x, initMax), 1)
         xMin, xMax = self.deconv(xMin=xMin, xMax=xMax)
+        xMin = torch.squeeze(xMin)
+        xMax = torch.squeeze(xMax)
         return xMin, xMax
 
 
@@ -198,25 +200,25 @@ if __name__ == "__main__":
            Conv2d-30          [-1, 256, 22, 22]         295,168
       BatchNorm2d-31          [-1, 256, 22, 22]             512
              ReLU-32          [-1, 256, 22, 22]               0
-  ConvTranspose2d-33          [-1, 256, 25, 25]       2,097,408
-      BatchNorm2d-34          [-1, 256, 25, 25]             512
-             ReLU-35          [-1, 256, 25, 25]               0
-  ConvTranspose2d-36          [-1, 128, 50, 50]         131,200
-      BatchNorm2d-37          [-1, 128, 50, 50]             256
-             ReLU-38          [-1, 128, 50, 50]               0
-  ConvTranspose2d-39         [-1, 64, 100, 100]          32,832
-      BatchNorm2d-40         [-1, 64, 100, 100]             128
-             ReLU-41         [-1, 64, 100, 100]               0
-  ConvTranspose2d-42          [-1, 1, 100, 100]              65
-  ConvTranspose2d-43          [-1, 256, 25, 25]       2,097,408
-      BatchNorm2d-44          [-1, 256, 25, 25]             512
-             ReLU-45          [-1, 256, 25, 25]               0
-  ConvTranspose2d-46          [-1, 128, 50, 50]         131,200
-      BatchNorm2d-47          [-1, 128, 50, 50]             256
-             ReLU-48          [-1, 128, 50, 50]               0
-  ConvTranspose2d-49         [-1, 64, 100, 100]          32,832
-      BatchNorm2d-50         [-1, 64, 100, 100]             128
-             ReLU-51         [-1, 64, 100, 100]               0
-  ConvTranspose2d-52          [-1, 1, 100, 100]              65
+  ConvTranspose2d-33          [-1, 256, 24, 24]       1,179,904
+      BatchNorm2d-34          [-1, 256, 24, 24]             512
+             ReLU-35          [-1, 256, 24, 24]               0
+  ConvTranspose2d-36          [-1, 128, 49, 49]         295,040
+      BatchNorm2d-37          [-1, 128, 49, 49]             256
+             ReLU-38          [-1, 128, 49, 49]               0
+  ConvTranspose2d-39           [-1, 64, 98, 98]         131,136
+      BatchNorm2d-40           [-1, 64, 98, 98]             128
+             ReLU-41           [-1, 64, 98, 98]               0
+  ConvTranspose2d-42            [-1, 1, 98, 98]              65
+  ConvTranspose2d-43          [-1, 256, 24, 24]       1,179,904
+      BatchNorm2d-44          [-1, 256, 24, 24]             512
+             ReLU-45          [-1, 256, 24, 24]               0
+  ConvTranspose2d-46          [-1, 128, 49, 49]         295,040
+      BatchNorm2d-47          [-1, 128, 49, 49]             256
+             ReLU-48          [-1, 128, 49, 49]               0
+  ConvTranspose2d-49           [-1, 64, 98, 98]         131,136
+      BatchNorm2d-50           [-1, 64, 98, 98]             128
+             ReLU-51           [-1, 64, 98, 98]               0
+  ConvTranspose2d-52            [-1, 1, 98, 98]              65
 ================================================================
 """

@@ -7,14 +7,14 @@ import os
 class iLayer(nn.Module):
     def __init__(self, shape):
         super().__init__()
-        #self.weights = torch.ones(shape, requires_grad=True, device=torch.device('cuda'))
-        self.weights = torch.ones(shape, requires_grad=True)
+        self.weights = torch.ones(shape, requires_grad=True, device=torch.device('cuda'))
+        # self.weights = torch.ones(shape, requires_grad=True)
 
         # self.weights = torch.rand(shape, requires_grad=True)
         #
         # print("weight shape", self.weights.shape)
-        #self.bias = torch.zeros(shape, requires_grad=True, device=torch.device('cuda'))
-        self.bias = torch.zeros(shape, requires_grad=True)
+        self.bias = torch.zeros(shape, requires_grad=True, device=torch.device('cuda'))
+        #self.bias = torch.zeros(shape, requires_grad=True)
         # self.bias = torch.rand(shape, requires_grad=True)
 
     def forward(self, input):
@@ -98,8 +98,8 @@ class seg_static(nn.Module):
             # 3D Conv Operation
             # sub_x = subx.permute(0,1,3,4,2)
 
-            #subx = self.convs[i](subx).to(torch.device("cuda")).float()
-            subx = self.convs[i](subx).float()
+            subx = self.convs[i](subx).to(torch.device("cuda")).float()
+            #subx = self.convs[i](subx).float()
 
             _add = self.affines[i](subx)
             # print("ADD shape", _add.shape)
@@ -116,11 +116,11 @@ class seg_static(nn.Module):
             else:
                 sub_output = torch.add(sub_output, _add)
 
-            print("sub_output shape", sub_output.shape)
+            #print("sub_output shape", sub_output.shape)
             # print(i // 10)
 
         sub_output = torch.unsqueeze(sub_output, 1)
-        print("sub_output", sub_output.shape)
+        #print("sub_output", sub_output.shape)
 
         return sub_output
 
@@ -151,11 +151,11 @@ class seg_static(nn.Module):
 
     def forward(self,subx, mainx):
         mainx = self.mainnet(mainx)
-        print("mainx", mainx.shape)
+        #print("mainx", mainx.shape)
 
         subx = self.subnet(subx)
         subx = torch.squeeze(subx)
-        print("subx", subx.shape)
+        #print("subx", subx.shape)
 
         x = torch.cat((subx, mainx), 1)
         x = self.cat_bn(x)

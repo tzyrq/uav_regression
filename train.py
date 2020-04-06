@@ -15,9 +15,9 @@ from utils import visualize_sum_testing_result
 from correlation import Correlation
 from auc import auc
 
-image_saving_dir = '/home/share_uav/ruiz/data/uav_regression/'
+image_saving_dir = '/home/zzhao/data/uav_regression/'
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 init_cor = Correlation()
 pred_cor = Correlation()
@@ -31,7 +31,7 @@ def train(model, train_loader, device, optimizer, criterion, epoch, batch_size):
 
     for batch_idx, data in enumerate(tqdm(train_loader)):
         optimizer.zero_grad()
-        # task = data['task'].to(device).float()
+        task = data['task'].to(device).float()
         task_label = data['task_label'].to(device).float()
         # print("task shape", task.shape)
 
@@ -52,13 +52,16 @@ def train(model, train_loader, device, optimizer, criterion, epoch, batch_size):
         loss_mse = criterion(prediction, label.data)
 
         # update the weights within the model
+        # 计算梯度
         loss_mse.backward()
+        # 更新参数
         optimizer.step()
 
         # accumulate loss
         if loss_mse != 0.0:
             sum_running_loss += loss_mse * init.size(0)
         num_images += init.size(0)
+
 
         if batch_idx % 50 == 0 or batch_idx == len(train_loader) - 1:
             sum_epoch_loss = sum_running_loss / num_images
@@ -71,7 +74,7 @@ def val(path, model, test_loader, device, criterion, epoch, batch_size):
 
     with torch.no_grad():
         for batch_idx, data in enumerate(tqdm(test_loader)):
-            task = data['task'].to(device).float()
+            # task = data['task'].to(device).float()
             task_label = data['task_label'].to(device).float()
 
             # All black
@@ -95,6 +98,7 @@ def val(path, model, test_loader, device, criterion, epoch, batch_size):
 
             # visualize the sum testing result
             visualize_sum_testing_result(path, init, prediction, task_label, label.data, batch_idx, epoch, batch_size)
+
             if batch_idx == 0:
                 prediction_output = prediction.cpu().detach().numpy()
                 label_output = label.cpu().detach().numpy()
@@ -144,7 +148,7 @@ def main():
     if not os.path.exists(args.checkpoint_dir + "/" + args.model_checkpoint_name):
         os.mkdir(args.checkpoint_dir + "/" + args.model_checkpoint_name)
 
-    device = torch.device("cuda")
+    device = torch.device('cuda')
 
     all_dataset = UAVDatasetTuple(task_path=args.data_path, task_label_path=args.data_label_path,
                                   init_path=args.init_path, label_path=args.label_path)
