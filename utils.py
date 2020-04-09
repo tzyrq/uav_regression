@@ -2,6 +2,9 @@ import os
 import torch
 import pickle
 import torchvision
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_curve, average_precision_score
 
@@ -74,3 +77,57 @@ def visualize_sum_training_result(init, prediction,sub_prediction, label, batch_
             epoch) + "/sum" + "/" + str(idx + batch_id * batch_size) + "_sub_prediction.png")
         torchvision.utils.save_image(prediction_output, "/home/share_uav/ruiz/data/uav_regression/training_result/epoch_" + str(epoch) + "/sum" + "/" + str(idx + batch_id * batch_size) +  "_prediction.png")
         torchvision.utils.save_image(label_output, "/home/share_uav/ruiz/data/uav_regression/training_result/epoch_" + str(epoch) + "/sum" + "/" + str(idx + batch_id * batch_size ) +  "_label.png")
+
+
+def pltHeatMap(path, epoch, batch_id, batch_size, initMin, labelMin, predMin, initMax, labelMax, predMax):
+
+    if not os.path.exists(path):
+        os.mkdir(path)
+    if not os.path.exists(path + "/epoch_" + str(epoch)):
+        os.mkdir(path + "/epoch_" + str(epoch))
+    if not os.path.exists(path + "/epoch_" + str(epoch) + "/heat_map"):
+        os.mkdir(path + "/epoch_" + str(epoch) + "/heat_map")
+
+    for idx, _ in enumerate(initMin):
+        eInitMin = initMin[idx].cpu().detach().numpy()
+        eInitMin = np.squeeze(eInitMin)
+        eLabelMin = labelMin[idx].cpu().detach().numpy()
+        eLabelMin = np.squeeze(eLabelMin)
+        ePredMin = predMin[idx].cpu().detach().numpy()
+        ePredMin = np.squeeze(ePredMin)
+        eInitMax = initMax[idx].cpu().detach().numpy()
+        eInitMax = np.squeeze(eInitMax)
+        eLabelMax = labelMax[idx].cpu().detach().numpy()
+        eLabelMax = np.squeeze(eLabelMax)
+        ePredMax = predMax[idx].cpu().detach().numpy()
+        ePredMax = np.squeeze(ePredMax)
+
+        fig, ax = plt.subplots(2, 3, figsize=(10, 15))
+
+        ax[0, 0].imshow(eInitMin)
+        ax[0, 0].set_title("initial min map", fontsize=15)
+
+        ax[0, 1].imshow(ePredMin)
+        ax[0, 1].set_title("predicted min map", fontsize=15)
+
+        ax[0, 2].imshow(eLabelMin)
+        ax[0, 2].set_title("label min map", fontsize=15)
+
+        ax[1, 0].imshow(eInitMax)
+        ax[1, 0].set_title("initial max map", fontsize=15)
+
+        ax[1, 1].imshow(ePredMax)
+        ax[1, 1].set_title("predicted max map", fontsize=15)
+
+        ax[1, 2].imshow(eLabelMax)
+        ax[1, 2].set_title("label max map", fontsize=15)
+
+        plt.savefig(path+"/epoch_" + str(epoch) + "/heat_map"
+                    + "/" + str(idx + batch_id * batch_size)
+                    + ".png", dpi=150)
+
+        plt.close(fig)
+
+
+
+

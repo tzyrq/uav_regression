@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import os
 from tqdm import tqdm
-from auc import auc
+from utils import pltHeatMap
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from correlation import Correlation
@@ -70,6 +70,7 @@ def val(model, path, test_loader, device, criterion, epoch, batch_size):
             labelMax = data['label_max'].to(device).float()
             inputs = data['input'].to(device).float()
 
+
             predictionMin, predictionMax = model(initMin=initMin,
                                                  initMax=initMax,
                                                  x=inputs)
@@ -80,8 +81,9 @@ def val(model, path, test_loader, device, criterion, epoch, batch_size):
             sum_running_loss += (lossMin + lossMax).item() * initMin.size(0)
 
             # TODO: visualization
-            #
-            #
+            pltHeatMap(path, epoch, batch_idx, batch_size,
+                       initMin, labelMin, predictionMin,
+                       initMax, labelMax, predictionMax)
 
             if batch_idx == 0:
                 outPredictionMin = predictionMin.cpu().detach().numpy()
@@ -194,6 +196,7 @@ def main():
 
     print('=' * 50 + "instantiate model" + '=' * 50)
     model = MinMaxModel()
+
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
         model = nn.DataParallel(model)
@@ -214,7 +217,6 @@ def main():
     print('=' * 50 + "ending setting loss criterion, optimizer, lr decay" + '=' * 50)
 
     correlation_path = image_saving_path
-
 
     if args.eval_only:
         print("evaluate only")
