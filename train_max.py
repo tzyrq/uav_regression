@@ -1,17 +1,17 @@
 import argparse
 import numpy as np
-from minmaxDataset import MinMaxDatasetTuple
-from minmax_model import MinMaxModel
+from maxDataset import MaxDatasetTuple
+from model_max import MaxModel
 import torch
 import torch.nn as nn
 import os
 from tqdm import tqdm
-from utils import pltMinMaxHeatMap
+from utils import pltMaxHeatMap
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from correlation import Correlation
 
-image_saving_dir = '/home/share_uav/ruiz/data/minmax/img/'
+image_saving_dir = '/home/share_uav/ruiz/data/max/img/'
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
@@ -21,7 +21,7 @@ init_max_cor = Correlation()
 pred_max_cor = Correlation()
 
 
-def train(model: MinMaxModel, train_loader, device, optimizer, criterion, epoch):
+def train(model: MaxModel, train_loader, device, optimizer, criterion, epoch):
     # set 为 train模式
     model.train()
 
@@ -32,26 +32,21 @@ def train(model: MinMaxModel, train_loader, device, optimizer, criterion, epoch)
         # 初始化梯度为0
         optimizer.zero_grad()
 
-        initMin = data['init_min'].to(device).float()
         initMax = data['init_max'].to(device).float()
-        labelMin = data['label_min'].to(device).float()
         labelMax = data['label_max'].to(device).float()
         inputs = data['input'].to(device).float()
 
-        predictionMin, predictionMax = model(initMin=initMin,
-                                             initMax=initMax,
-                                             x=inputs)
+        predictionMax = model(initMax=initMax, x=inputs)
 
-        lossMin = criterion(predictionMin, labelMin.data)
         lossMax = criterion(predictionMax, labelMax.data)
 
-        (lossMin + lossMax).backward()
+        lossMax.backward()
 
         optimizer.step()
 
-        if lossMin + lossMax != 0.0:
-            sum_running_loss += (lossMin + lossMax) * initMin.size(0)
-        num_images += initMin.size(0)
+        if lossMax != 0.0:
+            sum_running_loss += lossMax * initMax.size(0)
+        num_images += initMax.size(0)
 
         if batch_idx % 50 == 0 or batch_idx == len(train_loader) - 1:
             sum_epoch_loss = sum_running_loss / num_images
@@ -64,45 +59,29 @@ def val(model, path, test_loader, device, criterion, epoch, batch_size):
 
     with torch.no_grad():
         for batch_idx, data in enumerate(tqdm(test_loader)):
-            initMin = data['init_min'].to(device).float()
             initMax = data['init_max'].to(device).float()
-            labelMin = data['label_min'].to(device).float()
             labelMax = data['label_max'].to(device).float()
             inputs = data['input'].to(device).float()
-            # print(type(initMin))
-            predictionMin, predictionMax = model(initMin=initMin,
-                                                 initMax=initMax,
-                                                 x=inputs)
 
-            # print(initMin.size(0))
-            lossMin = criterion(predictionMin, labelMin.data)
+            predictionMax = model(initMax=initMax, x=inputs)
+
             lossMax = criterion(predictionMax, labelMax.data)
 
-            sum_running_loss += (lossMin + lossMax).item() * initMin.size(0)
+            sum_running_loss += lossMax.item() * initMax.size(0)
 
             # TODO: visualization
-            pltMinMaxHeatMap(path, epoch, batch_idx, batch_size,
-                       initMin, labelMin, predictionMin,
-                       initMax, labelMax, predictionMax)
+            pltMaxHeatMap(path, epoch, batch_idx, batch_size,
+                          initMax, labelMax, predictionMax)
 
             if batch_idx == 0:
-                outPredictionMin = predictionMin.cpu().detach().numpy()
                 outPredictionMax = predictionMax.cpu().detach().numpy()
-                outLabelMin = labelMin.cpu().detach().numpy()
                 outLabelMax = labelMax.cpu().detach().numpy()
-                outInitMin = initMin.cpu().detach().numpy()
                 outInitMax = initMax.cpu().detach().numpy()
             else:
-                outPredictionMin = np.append(predictionMin.cpu().detach().numpy(),
-                                             outPredictionMin, axis=0)
                 outPredictionMax = np.append(predictionMax.cpu().detach().numpy(),
                                              outPredictionMax, axis=0)
-                outLabelMin = np.append(labelMin.cpu().detach().numpy(),
-                                        outLabelMin, axis=0)
                 outLabelMax = np.append(labelMax.cpu().detach().numpy(),
                                         outLabelMax, axis=0)
-                outInitMin = np.append(initMin.cpu().detach().numpy(),
-                                       outInitMin, axis=0)
                 outInitMax = np.append(initMax.cpu().detach().numpy(),
                                        outInitMax, axis=0)
 
@@ -114,18 +93,12 @@ def val(model, path, test_loader, device, criterion, epoch, batch_size):
     # auc_path = os.path.join(path, "max_epoch_" + str(epoch))
     # auc(['flow'], [2, 4, 10, 100], [[outLabelMax, outPredictionMax]], auc_path)
 
-    return sum_loss, outPredictionMin, outPredictionMax, \
-           outLabelMin, outLabelMax, outInitMin, outInitMax
+    return sum_loss, outPredictionMax, outLabelMax, outInitMax
 
 
-def loadData(init_min_path: str, init_max_path: str,
-             label_min_path: str, label_max_path: str,
+def loadData(init_max_path: str, label_max_path: str,
              input_path: str, splitRatio: str, batch_size):
-    all_dataset = MinMaxDatasetTuple(input_path=input_path,
-                                     init_min_path=init_min_path,
-                                     init_max_path=init_max_path,
-                                     label_min_path=label_min_path,
-                                     label_max_path=label_max_path)
+    all_dataset = MaxDatasetTuple(input_path=input_path, init_max_path=init_max_path, label_max_path=label_max_path)
 
     trainSize = int(splitRatio * len(all_dataset))
     testSize = len(all_dataset) - trainSize
@@ -146,9 +119,7 @@ def loadData(init_min_path: str, init_max_path: str,
 def setParser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_path", help="input path", required=True, type=str)
-    parser.add_argument("--init_min_path", help="init min path", required=True, type=str)
     parser.add_argument("--init_max_path", help="init max path", required=True, type=str)
-    parser.add_argument("--label_min_path", help="label min path", required=True, type=str)
     parser.add_argument("--label_max_path", help="label max path", required=True, type=str)
     parser.add_argument("--lr", help="learning rate", required=True, type=float)
     parser.add_argument("--momentum", help="momentum", required=True, type=float)
@@ -188,14 +159,13 @@ def main():
     device = torch.device('cuda')
 
     print('=' * 50 + "loading data and instantiating data loader" + '=' * 50)
-    trainDataLoader, testDataLoader = loadData(init_min_path=args.init_min_path, init_max_path=args.init_max_path,
-                                               label_min_path=args.label_min_path, label_max_path=args.label_max_path,
+    trainDataLoader, testDataLoader = loadData(init_max_path=args.init_max_path, label_max_path=args.label_max_path,
                                                input_path=args.input_path, splitRatio=args.split_ratio,
                                                batch_size=args.batch_size)
     print('=' * 50 + "ending loading data and instantiating data loader" + '=' * 50)
 
     print('=' * 50 + "instantiate model" + '=' * 50)
-    model = MinMaxModel()
+    model = MaxModel()
 
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
@@ -221,21 +191,18 @@ def main():
     if args.eval_only:
         print("evaluate only")
         for epoch in range(1):
-            loss, outPreMin, outPreMax, outLabelMin, outLabelMax, outInitMin, outInitMax = \
+            loss, outPreMax, outLabelMax, outInitMax = \
                 val(model, path=image_saving_path, test_loader=testDataLoader,
                     device=device, criterion=criterion, epoch=epoch, batch_size=args.batch_size)
             cor_path = os.path.join(correlation_path, "epoch_" + str(epoch))
-            min_coef_pre_label = pred_min_cor.corrcoef(prediction=outPreMin, label=outLabelMin,
-                                                       path=cor_path, name="min_correlation_{0}.png".format(epoch))
+
             max_coef_pre_label = pred_max_cor.corrcoef(prediction=outPreMax, label=outLabelMax,
                                                        path=cor_path, name="max_correlation_{0}.png".format(epoch))
-            min_coef_init_label = init_min_cor.corrcoef(outInitMin, outLabelMin,
-                                                        cor_path, "min_correlation_init_label{0}.png".format(epoch))
             max_coef_init_label = init_max_cor.corrcoef(outInitMax, outLabelMax,
                                                         cor_path, "max_correlation_init_label{0}.png".format(epoch))
-            print('correlation coefficient min:{0}, max:{1}\n'.format(min_coef_pre_label, max_coef_pre_label))
-            print('correlation_init_label coefficient min:{0}, max:{1}\n'
-                  .format(min_coef_init_label, max_coef_init_label))
+            print('correlation coefficient max:{0}\n'.format(max_coef_pre_label))
+            print('correlation_init_label coefficient max:{0}\n'
+                  .format(max_coef_init_label))
         print('=' * 50 + "ending evaluating only" + '=' * 50)
         return True
 
@@ -248,9 +215,10 @@ def main():
         train(model, trainDataLoader, device, optimizer_ft, criterion, epoch)
         exp_lr_scheduler.step()
         cor_path = os.path.join(correlation_path, "epoch_" + str(epoch))
-        os.mkdir(cor_path)
+        if not os.path.exists(cor_path):
+            os.mkdir(cor_path)
 
-        loss, outPreMin, outPreMax, outLabelMin, outLabelMax, outInitMin, outInitMax = \
+        loss, outPreMax, outLabelMax, outInitMax = \
             val(model, path=image_saving_path, test_loader=testDataLoader,
                 device=device, criterion=criterion, epoch=epoch, batch_size=args.batch_size)
 
@@ -260,17 +228,12 @@ def main():
                        model=model)
             best_loss = loss
 
-        min_coef_pre_label = pred_min_cor.corrcoef(prediction=outPreMin, label=outLabelMin,
-                                                   path=cor_path, name="min_correlation_{0}.png".format(epoch))
         max_coef_pre_label = pred_max_cor.corrcoef(prediction=outPreMax, label=outLabelMax,
                                                    path=cor_path, name="max_correlation_{0}.png".format(epoch))
-        min_coef_init_label = init_min_cor.corrcoef(outInitMin, outLabelMin,
-                                                    cor_path, "min_correlation_init_label{0}.png".format(epoch))
         max_coef_init_label = init_max_cor.corrcoef(outInitMax, outLabelMax,
                                                     cor_path, "max_correlation_init_label{0}.png".format(epoch))
-        print('correlation coefficient min:{0}, max:{1}\n'.format(min_coef_pre_label, max_coef_pre_label))
-        print('correlation_init_label coefficient min:{0}, max:{1}\n'.format(min_coef_init_label,
-                                                                             max_coef_init_label))
+        print('correlation coefficient max:{0}\n'.format(max_coef_pre_label))
+        print('correlation_init_label coefficient max:{0}\n'.format(max_coef_init_label))
     print('=' * 50 + "ending training and evaluating" + '=' * 50)
 
 
