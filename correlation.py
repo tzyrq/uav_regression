@@ -22,10 +22,13 @@ class Correlation:
         y_true = label.reshape((-1))
         r = np.corrcoef(x, y_true)
         r = r[0,1]
-        # print('correlation coefficient : \n', r)
-        if r > self.best:
-            self.best = r
-        r = self.best
+
+        if r <= self.best:
+            return r
+
+        self.best = r
+        # r = self.best
+
         y_pre = x*r
         
         maxVal = 0.0
