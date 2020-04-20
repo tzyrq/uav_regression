@@ -4,10 +4,11 @@ import sys
 
 
 class MaxDatasetTuple(Dataset):
-    def __init__(self, input_path, init_max_path, label_max_path):
+    def __init__(self, input_path, init_max_path, label_max_path, labelSize):
         self.input_path = input_path
         self.init_max_path = init_max_path
         self.label_max_path = label_max_path
+        self.labelSize = labelSize
 
         self.label_max_md = []
         self.init_max_md = []
@@ -43,18 +44,7 @@ class MaxDatasetTuple(Dataset):
         return self.input_md[idx]
 
     def _prepare_label(self, idx):
-        return self.label_max_md[idx].reshape(98, 98)
+        return self.label_max_md[idx].reshape(self.labelSize, self.labelSize)
 
 
-if __name__ == '__main__':
-    init_max_path = "/home/share_uav/ruiz/data/minmax/dataset/initialMax.npy"
-    label_max_path = "/home/share_uav/ruiz/data/minmax/dataset/labelMax.npy"
-    input_path = "/home/share_uav/ruiz/data/minmax/dataset/input.npy"
 
-    all_dataset = MaxDatasetTuple(input_path=input_path,
-                                  init_max_path=init_max_path,
-                                  label_max_path=label_max_path)
-    sample = all_dataset[0]
-
-    np.set_printoptions(threshold=np.inf)
-    print(sample)

@@ -2,6 +2,8 @@ import argparse
 import numpy as np
 from maxDataset import MaxDatasetTuple
 from model_max import MaxModel
+from model_5_max import Max5Model
+from model_10_max import Max10Model
 import torch
 import torch.nn as nn
 import os
@@ -11,7 +13,7 @@ import torch.optim as optim
 from torch.optim import lr_scheduler
 from correlation import Correlation
 
-image_saving_dir = '/home/share_uav/ruiz/data/max/img/'
+image_saving_dir = '/home/share_uav/ruiz/data/max_10/img/'
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
@@ -21,7 +23,7 @@ init_max_cor = Correlation()
 pred_max_cor = Correlation()
 
 
-def train(model: MaxModel, train_loader, device, optimizer, criterion, epoch):
+def train(model, train_loader, device, optimizer, criterion, epoch):
     # set 为 train模式
     model.train()
 
@@ -70,8 +72,8 @@ def val(model, path, test_loader, device, criterion, epoch, batch_size):
             sum_running_loss += lossMax.item() * initMax.size(0)
 
             # TODO: visualization
-            pltMaxHeatMap(path, epoch, batch_idx, batch_size,
-                          initMax, labelMax, predictionMax)
+            # pltMaxHeatMap(path, epoch, batch_idx, batch_size,
+            #               initMax, labelMax, predictionMax)
 
             if batch_idx == 0:
                 outPredictionMax = predictionMax.cpu().detach().numpy()
@@ -98,7 +100,8 @@ def val(model, path, test_loader, device, criterion, epoch, batch_size):
 
 def loadData(init_max_path: str, label_max_path: str,
              input_path: str, splitRatio: str, batch_size):
-    all_dataset = MaxDatasetTuple(input_path=input_path, init_max_path=init_max_path, label_max_path=label_max_path)
+    all_dataset = MaxDatasetTuple(input_path=input_path, init_max_path=init_max_path, label_max_path=label_max_path,
+                                  labelSize=91)
 
     trainSize = int(splitRatio * len(all_dataset))
     testSize = len(all_dataset) - trainSize
@@ -165,7 +168,9 @@ def main():
     print('=' * 50 + "ending loading data and instantiating data loader" + '=' * 50)
 
     print('=' * 50 + "instantiate model" + '=' * 50)
-    model = MaxModel()
+    # model = MaxModel()
+    # model = Max5Model()
+    model = Max10Model()
 
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
