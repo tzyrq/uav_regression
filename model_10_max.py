@@ -102,6 +102,7 @@ class Max10Model(nn.Module):
         return xMax
 
 
+
 if __name__ == "__main__":
     m = Max10Model()
     summary(m, input_size=[(1, 91, 91), (60, 100, 100)],

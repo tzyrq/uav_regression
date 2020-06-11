@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from utils import pltHeatMap
+
 
 if __name__ == "__main__":
 

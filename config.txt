@@ -33,11 +33,11 @@ minmax_model_v_1
 
 ================== Max ========================================
 --input_path
-/home/share_uav/ruiz/data/minmax/dataset/input.npy
+/home/share_uav/ruiz/data/max_10/dataset/input.npy
 --init_max_path
-/home/share_uav/ruiz/data/minmax/dataset/initialMax.npy
+/home/share_uav/ruiz/data/max_10/dataset/initialMax.npy
 --label_max_path
-/home/share_uav/ruiz/data/minmax/dataset/labelMax.npy
+/home/share_uav/ruiz/data/max_10/dataset/labelMax.npy
 --lr
 0.005
 --momentum
@@ -51,7 +51,7 @@ minmax_model_v_1
 --split_ratio
 0.9
 --checkpoint_dir
-/home/share_uav/ruiz/data/max/checkpoint
+/home/share_uav/ruiz/data/max_10/checkpoint
 --model_checkpoint_name
 max_model_v_1
 --image_save_folder

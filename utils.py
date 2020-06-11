@@ -109,13 +109,13 @@ def pltMaxHeatMap(path, epoch, batch_id, batch_size, initMax, labelMax, predMax)
 
         fig, ax = plt.subplots(1, 3, figsize=(10, 15))
         # print(eInitMax.shape)
-        ax[0].imshow(eInitMax)
+        ax[0].imshow(eInitMax, cmap="jet")
         ax[0].set_title("initial max map", fontsize=15)
 
-        ax[1].imshow(ePredMax)
+        ax[1].imshow(ePredMax, cmap="jet")
         ax[1].set_title("predicted max map", fontsize=15)
 
-        ax[2].imshow(eLabelMax)
+        ax[2].imshow(eLabelMax, cmap="jet")
         ax[2].set_title("label max map", fontsize=15)
 
         plt.savefig(path + "/epoch_" + str(epoch) + "/heat_map"
@@ -173,8 +173,3 @@ def pltMinMaxHeatMap(path, epoch, batch_id, batch_size, initMin, labelMin, predM
 
         plt.close(fig)
 
-
-if __name__ == "__main__":
-    data = {"a": [1, 2, 3], "b": [4, 5, 6]}
-    print(data)
-    pltHeatMap1(data=data, a=1)

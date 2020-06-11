@@ -15,7 +15,7 @@ from correlation import Correlation
 
 image_saving_dir = '/home/share_uav/ruiz/data/max_10/img/'
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 init_min_cor = Correlation()
 pred_min_cor = Correlation()
@@ -72,8 +72,8 @@ def val(model, path, test_loader, device, criterion, epoch, batch_size):
             sum_running_loss += lossMax.item() * initMax.size(0)
 
             # TODO: visualization
-            # pltMaxHeatMap(path, epoch, batch_idx, batch_size,
-            #               initMax, labelMax, predictionMax)
+            pltMaxHeatMap(path, epoch, batch_idx, batch_size,
+                          initMax, labelMax, predictionMax)
 
             if batch_idx == 0:
                 outPredictionMax = predictionMax.cpu().detach().numpy()
@@ -168,14 +168,17 @@ def main():
     print('=' * 50 + "ending loading data and instantiating data loader" + '=' * 50)
 
     print('=' * 50 + "instantiate model" + '=' * 50)
+
     # model = MaxModel()
     # model = Max5Model()
     model = Max10Model()
 
+    print("Visible GPU counts", torch.cuda.device_count())
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
         model = nn.DataParallel(model)
     model = model.to(device)
+    print("current running on", torch.cuda.get_device_properties(torch.cuda.current_device()))
     print('=' * 50 + "ending instantiating model" + '=' * 50)
 
     if args.load_from_main_checkpoint:
